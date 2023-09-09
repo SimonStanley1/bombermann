@@ -17,6 +17,17 @@ filename = os.path.join("parameters", f'{network_params}.pt')
 #torch.from_numpy(np.vstack(ACTIONS_IDX['LEFT','RIGHT','UP'])).long().to(device)
 done = torch.tensor([1.0,1.0])
 mask = (done == 1).nonzero(as_tuple=True)
-print(mask)
+#for i in range(3):
+#    print(i)
+#print(range(3))
 t[mask] = 0.0
-print(t)
+#print(t)
+
+# = [[[1,1],3],[[2,2],2],[[3,3],1]]
+b = (((1,1),3),((2,2),2))
+#or i in b:
+#    print(i[0])
+
+#a = np.array([1,2])
+#b = np.array([3,4])
+print(np.zeros((17,17)))

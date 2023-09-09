@@ -20,23 +20,24 @@ ACTIONS_IDX = {'LEFT':0, 'RIGHT':1, 'UP':2, 'DOWN':3, 'WAIT':4, 'BOMB':5}
 #ACTIONS_IDX = {'LEFT':0, 'RIGHT':1, 'UP':2, 'DOWN':3}
 
 BUFFER_SIZE = int(1e5)  #replay buffer size
-BATCH_SIZE = 5         # minibatch size
+BATCH_SIZE = 4         # minibatch size
 GAMMA = 0.99            # discount factor
 TAU = 1e-3              # for soft update of target parameters
-LR = 3e-4               # learning rate
+LR = 5e-4               # learning rate
 #UPDATE_EVERY = 20        # how often to update the network
-TOTAL_EPISODES = 100000
+TOTAL_EPISODES = 25000
 
 EPSILON_START = 1
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.9999
+EPSILON_DECAY = 0.9997
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def step(self, features, action, reward, next_features, done):
     # Save experience in replay memory
-    self.memory.add(features, action, reward, next_features, done)
+    feat = torch.unsqueeze(features, dim=0)
+    self.memory.add(feat, action, reward, next_features, done)
 
     # Learn every UPDATE_EVERY time steps.
     self.t_step = (self.t_step+1)% BATCH_SIZE
@@ -66,6 +67,7 @@ def learn(self, experiences, gamma):
     # So that when we do a forward pass with target model it does not calculate gradient.
     # We will update target model weights with soft_update function
     #shape of output from the model (batch_size,action_dim) = (64,6)
+    print(features)
     q_eval = torch.flatten(self.qnetwork(features).gather(1,actions))
     
     with torch.no_grad():
@@ -187,17 +189,18 @@ def reward_from_events(self, events: List[str]) -> int:
     certain behavior.
     """
     game_rewards = {
-        e.COIN_COLLECTED: 100,
-        e.KILLED_OPPONENT: 500,
-        e.MOVED_RIGHT: -1,
-        e.MOVED_LEFT: -1,
-        e.MOVED_UP: -1,
-        e.MOVED_DOWN: -1,
-        e.WAITED: -1,
-        e.INVALID_ACTION: -10,
-        e.BOMB_DROPPED: -1,
-        e.KILLED_SELF: -500,
-        e.GOT_KILLED: -700,
+        e.COIN_COLLECTED: 0.7,
+        e.KILLED_OPPONENT: 0.05,
+        e.MOVED_DOWN : -0.01,
+        e.MOVED_LEFT : -0.01,
+        e.MOVED_RIGHT : -0.01,
+        e.MOVED_UP : -0.01,
+        e.WAITED : -0.3,
+        e.INVALID_ACTION : -0.5,
+        e.KILLED_SELF : -2,
+        e.SURVIVED_ROUND : 1,
+        e.CRATE_DESTROYED : 0.3,
+        e.COIN_FOUND : 0.4
     }
     reward_sum = 0
     for event in events:
@@ -205,5 +208,3 @@ def reward_from_events(self, events: List[str]) -> int:
             reward_sum += game_rewards[event]
     self.logger.info(f"Awarded {reward_sum} for events {', '.join(events)}")
     return reward_sum
-
-        
